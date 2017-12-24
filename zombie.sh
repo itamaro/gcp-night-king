@@ -1,0 +1,24 @@
+#!/bin/bash
+# -*- coding: utf-8 -*-
+# Shutdown script for preemptible instances
+# (ask Night King to resurrect on preemption)
+
+META_URL="http://metadata.google.internal/computeMetadata/v1/instance"
+GCLOUD="$( type -P gcloud )"
+TOPIC="night-king-preempt"
+
+get_meta() {
+  curl -s "$META_URL/$1" -H "Metadata-Flavor: Google"
+}
+
+IS_PREEMPTED="$( get_meta preempted )"
+
+if [ "$IS_PREEMPTED" == "TRUE" ]; then
+  NAME="$( get_meta name )"
+  ZONE="$( get_meta zone | cut -d '/' -f 4 )"
+
+  # need gcloud beta for pubsub
+  yes | sudo "$GCLOUD" components install beta
+  "$GCLOUD" beta pubsub topics publish "$TOPIC" \
+      '{"name": "'${NAME}'", "zone": "'${ZONE}'"}'
+fi
