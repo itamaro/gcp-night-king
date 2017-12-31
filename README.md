@@ -103,8 +103,6 @@ Use either Pipenv or Docker to hack on the service locally.
 
 For Pipenv workflow - take a look at the `Running ...` section.
 
-If you add / remove / modify Python dependencies, also run `pipenv run pip freeze > requirements.txt` to keep the Pipfile and requirements.txt files in sync (one is used by Pipenv, and one is used by Docker).
-
 For Docker workflow, either build or pull the Docker image:
 
 ```sh
