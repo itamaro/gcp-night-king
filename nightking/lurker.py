@@ -29,6 +29,27 @@ from google.cloud import pubsub_v1
 logger = logging.getLogger('nightking.lurker')
 
 
+class GoogleCloud:
+  """Helper class for interacting with Google Cloud compute API."""
+
+  def __init__(self, project_id):
+    # disable cache discovery
+    # https://github.com/google/google-api-python-client/issues/299#issuecomment-268915510
+    compute = discovery.build('compute', 'v1', cache_discovery=False)
+    self.inst_api = compute.instances()
+    self.project_id = project_id
+
+  def get_instance(self, zone, inst_name):
+    """Return a dictionary describing a GCE instance, if it exists."""
+    return self.inst_api.get(project=self.project_id, zone=zone,
+                             instance=inst_name).execute()
+
+  def start_instance(self, zone, inst_name):
+    """Call the start GCE instance API, returning the operation response."""
+    return self.inst_api.start(project=self.project_id, zone=zone,
+                               instance=inst_name).execute()
+
+
 def resurrect_instance(project_id, instance_desc):
   """Try resurrecting a terminated (preempted) GCE instance.
 
@@ -48,14 +69,12 @@ def resurrect_instance(project_id, instance_desc):
   logger.info('Got resurrection request for instance "%s" in zone "%s"',
               inst_name, zone)
 
-  compute = discovery.build('compute', 'v1')
-
+  gcloud = GoogleCloud(project_id)
   keep_trying = True
   while keep_trying:
     keep_trying = False
     try:
-      gce_inst = compute.instances().get(
-        project=project_id, zone=zone, instance=inst_name).execute()
+      gce_inst = gcloud.get_instance(zone, inst_name)
     except (errors.HttpError, TypeError):
       logger.warning('No instance named "%s" in zone "%s"', inst_name, zone)
     else:
@@ -70,22 +89,19 @@ def resurrect_instance(project_id, instance_desc):
       else:
         logger.info('Attempting to start instance "%s" in zone "%s"',
                     inst_name, zone)
-        response = compute.instances().start(
-            project=project_id, zone=zone, instance=inst_name).execute()
+        response = gcloud.start_instance(zone, inst_name)
         logger.debug('Started GCE operation: %r', response)
 
 
-def main(project_id, subscription_name):
-  """Subscribe to Pub/Sub topic, handling GCE-instance-resurrection messages.
-
-  Ignore (and ACK) messages that are not well-formed.
-  Try handle any other message, ACKing it eventually (always).
-  """
-  subscriber = pubsub_v1.SubscriberClient()
-  subscription_path = subscriber.subscription_path(
-      project_id, subscription_name)
+def make_callback(subscription_path, project_id):
+  """Return a callback closure"""
 
   def callback(message):
+    """Handle Pub/Sub resurrection message.
+
+    Ignore (and ACK) messages that are not well-formed.
+    Try handle any other message, ACKing it eventually (always).
+    """
     logger.info('Handling message from subscription "%s"', subscription_path)
     # parse the message, ACK on failure to avoid duplicate deliveries
     try:
@@ -98,7 +114,16 @@ def main(project_id, subscription_name):
       logger.info('ACKing message\n%s', message)
       message.ack()
 
-  subscriber.subscribe(subscription_path, callback=callback)
+  return callback
+
+
+def main(project_id, subscription_name):
+  """Subscribe to Pub/Sub topic, handling GCE-instance-resurrection messages."""
+  subscriber = pubsub_v1.SubscriberClient()
+  subscription_path = subscriber.subscription_path(
+      project_id, subscription_name)
+  subscriber.subscribe(subscription_path,
+                       callback=make_callback(subscription_path, project_id))
   # The subscriber is non-blocking, so we must keep the main thread from
   # exiting to allow it to process messages in the background.
   logger.info('Listening for messages on subscription: %s', subscription_path)
@@ -107,6 +132,7 @@ def main(project_id, subscription_name):
 
 
 def configure_logging():
+  """Configure DEBUG-level logging with console output."""
   logger.setLevel(logging.DEBUG)
   ch = logging.StreamHandler()
   ch.setLevel(logging.DEBUG)
