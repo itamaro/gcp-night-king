@@ -31,7 +31,7 @@ gcloud pubsub topics create night-king-preempt
 gcloud pubsub subscriptions create night-king-preempt --topic night-king-preempt
 ```
 
-### Running The Night King service
+## Running The Night King service
 
 The Night King service is a Python application.
 To run it directly, you'll need Python 3.4+ and [Pipenv](https://docs.pipenv.org/):
@@ -63,7 +63,27 @@ You'll also need to have [Google Cloud SDK authorization](https://cloud.google.c
 
 Beyond that, there are multiple ways to have the service running "in production" (e.g., not in the foreground of your dev-machine terminal).
 
-You can use whatever method fits your environment (and deployment-setup contributions are welcome).
+You can use whatever method fits your environment (and deployment-setup contributions are welcome). See below details for already-supprted methods.
+
+## Deploying the Night King service to Kubernetes
+
+If you have a Kubernetes cluster, it makes sense deploying this service to the cluster.
+
+The following assumes you have [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/), and it is configured with the correct cluster.
+
+First, create a config-map with your project ID:
+
+```sh
+kubectl create configmap nightking-config --from-literal=project.id=<YOUR-PROJECT-ID>
+```
+
+Now you can deploy the service by applying the deployment YAML:
+
+```sh
+kubectl apply -f k8s-deploy.yaml
+```
+
+Feel free to modify the deployment YAML to fit your needs (resources, Docker image, other flags, etc.).
 
 ## Configure Shutdown Script
 
