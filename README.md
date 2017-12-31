@@ -119,3 +119,9 @@ docker run -it --rm -v $HOME/.config/gcloud:/root/.config/gcloud itamarost/gcp-n
 ```
 
 Note: the bind-mount is useful to use your own Google Cloud credentials (same as when using Pipenv) - feel free to use other methods to obtain appropriate Google Cloud credentials.
+
+To test it locally in an end-to-end workflow, without creating preemptible instances and waiting for them to be preempted, you can trigger a preemption message manually with the following command:
+
+```sh
+gcloud pubsub topics publish night-king-preempt --message '{"name": "INSTANCE_NAME", "zone": "ZONE"}'
+```
