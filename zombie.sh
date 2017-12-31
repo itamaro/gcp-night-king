@@ -17,8 +17,6 @@ if [ "$IS_PREEMPTED" == "TRUE" ]; then
   NAME="$( get_meta name )"
   ZONE="$( get_meta zone | cut -d '/' -f 4 )"
 
-  # need gcloud beta for pubsub
-  yes | sudo "$GCLOUD" components install beta
-  "$GCLOUD" beta pubsub topics publish "$TOPIC" \
-      '{"name": "'${NAME}'", "zone": "'${ZONE}'"}'
+  "$GCLOUD" pubsub topics publish "$TOPIC" \
+      --message '{"name": "'${NAME}'", "zone": "'${ZONE}'"}'
 fi
