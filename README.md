@@ -101,7 +101,11 @@ Note: when providing explicit scopes, make sure to include the `https://www.goog
 
 Use either Pipenv or Docker to hack on the service locally.
 
-For Pipenv workflow - take a look at the `Running ...` section.
+For Pipenv workflow - take a look at the `Running ...` section, and run the test suite:
+
+```sh
+pipenv run pytest
+```
 
 For Docker workflow, either build or pull the Docker image:
 
