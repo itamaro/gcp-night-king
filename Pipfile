@@ -15,6 +15,8 @@ google-api-python-client = "*"
 
 [dev-packages]
 
+pytest = "*"
+pytest-mock = "*"
 
 
 [requires]
