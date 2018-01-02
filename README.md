@@ -1,6 +1,8 @@
 # GCP Night King
 
-A service for resurrecting preempted GCE instances.
+A service for resurrecting pre-empted GCE instances.
+
+See also [a Go version](https://github.com/itamaro/gcp-go-night-king) of the same project.
 
 
 ## Overview
