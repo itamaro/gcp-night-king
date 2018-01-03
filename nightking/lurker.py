@@ -70,27 +70,36 @@ def resurrect_instance(project_id, instance_desc):
               inst_name, zone)
 
   gcloud = GoogleCloud(project_id)
-  keep_trying = True
-  while keep_trying:
-    keep_trying = False
+  still_running_count = 0
+  while True:
     try:
       gce_inst = gcloud.get_instance(zone, inst_name)
     except (errors.HttpError, TypeError):
       logger.warning('No instance named "%s" in zone "%s"', inst_name, zone)
+      return
+    if gce_inst['status'] == 'TERMINATED':
+      logger.info('Attempting to start terminated instance "%s" in zone "%s"',
+                  inst_name, zone)
+      response = gcloud.start_instance(zone, inst_name)
+      logger.debug('Started GCE operation: %r', response)
+      return
+    elif gce_inst['status'] == 'STOPPING':
+      logger.info('Instance "%s/%s" is stopping - waiting for termination',
+                  zone, inst_name)
+      time.sleep(10.0)
+    elif gce_inst['status'] == 'RUNNING':
+      still_running_count += 1
+      if still_running_count > 6:
+        logger.warning('Instance "%s/%s" has been running for the last 3 '
+                       'minutes - assuming it\'s not about to terminate',
+                       zone, inst_name)
+        return
+      logger.info('Instance "%s/%s" still running - waiting for termination',
+                  zone, inst_name)
+      time.sleep(30.0)
     else:
-      if gce_inst['status'] == 'STOPPING':
-        logger.info('Instance "%s" in zone "%s" not yet terminated - waiting..',
-                    inst_name, zone)
-        keep_trying = True
-        time.sleep(30.0)
-      elif gce_inst['status'] != 'TERMINATED':
-        logger.info('Instance "%s" in zone "%s" not terminated',
-                    inst_name, zone)
-      else:
-        logger.info('Attempting to start instance "%s" in zone "%s"',
-                    inst_name, zone)
-        response = gcloud.start_instance(zone, inst_name)
-        logger.debug('Started GCE operation: %r', response)
+      logger.warning('Not sure how to handle instance "%s/%s" status: "%s" '
+                     '-- ignoring', zone, inst_name, gce_inst['status'])
 
 
 def make_callback(subscription_path, project_id):
