@@ -1,4 +1,4 @@
-# GCP Night King
+# GCP Night King  [![Build Status](https://travis-ci.org/itamaro/gcp-night-king.svg?branch=master)](https://travis-ci.org/itamaro/gcp-night-king)
 
 A service for resurrecting pre-empted GCE instances.
 
@@ -106,7 +106,7 @@ Use either Pipenv or Docker to hack on the service locally.
 For Pipenv workflow - take a look at the `Running ...` section, and run the test suite:
 
 ```sh
-pipenv run pytest
+PYTHONPATH=. pipenv run pytest
 ```
 
 For Docker workflow, either build or pull the Docker image:
