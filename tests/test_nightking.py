@@ -28,6 +28,8 @@ class MockPubSubMessage:
 
 def test_resurrect(mocker, callback):
   """Test that when a VM is in TERMINATED state it is restarted."""
+  mocker.patch.object(lurker.GoogleCloud, '__init__',
+                      auto_spec=True, return_value=None)
   mocker.patch.object(lurker.GoogleCloud, 'get_instance',
                       auto_spec=True, return_value={'status': 'TERMINATED'})
   mocker.patch.object(lurker.GoogleCloud, 'start_instance', auto_spec=True)
@@ -41,6 +43,8 @@ def test_resurrect(mocker, callback):
 def test_resurrect_realistic_flow(mocker, callback):
   """Test that when a VM is RUNNING -> STOPPING -> TERMINATED,
      it is restarted eventually."""
+  mocker.patch.object(lurker.GoogleCloud, '__init__',
+                      auto_spec=True, return_value=None)
   mocker.patch.object(
       lurker.GoogleCloud, 'get_instance', auto_spec=True,
       side_effect=[
@@ -61,6 +65,8 @@ def test_resurrect_realistic_flow(mocker, callback):
 
 def test_resurrect_still_running(mocker, callback):
   """Test that when a VM is in RUNNING state for a while nothing happens."""
+  mocker.patch.object(lurker.GoogleCloud, '__init__',
+                      auto_spec=True, return_value=None)
   mocker.patch.object(lurker.GoogleCloud, 'get_instance',
                       auto_spec=True, return_value={'status': 'RUNNING'})
   mocker.patch.object(lurker.GoogleCloud, 'start_instance', auto_spec=True)
@@ -75,6 +81,8 @@ def test_resurrect_still_running(mocker, callback):
 def test_resurrect_stopping(mocker, callback):
   """Test that when a VM is in STOPPING state it will be
      restarted after it reaches the TERMINATED state."""
+  mocker.patch.object(lurker.GoogleCloud, '__init__',
+                      auto_spec=True, return_value=None)
   mocker.patch.object(
       lurker.GoogleCloud, 'get_instance', auto_spec=True,
       side_effect=[{'status': 'STOPPING'}, {'status': 'TERMINATED'}])
@@ -89,6 +97,8 @@ def test_resurrect_stopping(mocker, callback):
 
 def test_resurrect_no_such_vm(mocker, callback):
   """Test that when there's no such VM nothing happens."""
+  mocker.patch.object(lurker.GoogleCloud, '__init__',
+                      auto_spec=True, return_value=None)
   mocker.patch.object(lurker.GoogleCloud, 'get_instance',
                       auto_spec=True, side_effect=errors.HttpError)
   mocker.patch.object(lurker.GoogleCloud, 'start_instance', auto_spec=True)
@@ -111,6 +121,8 @@ def test_invalid_json(mocker, callback):
 def test_missing_fields(mocker, callback):
   """Test that missing JSON doesn't crash the service, and message is ACKed."""
   mocker.spy(lurker, 'resurrect_instance')
+  mocker.patch.object(lurker.GoogleCloud, '__init__',
+                      auto_spec=True, return_value=None)
   mocker.patch.object(lurker.GoogleCloud, 'get_instance', auto_spec=True)
   message = MockPubSubMessage('{"foo": "bar"}')
   callback(message)
