@@ -17,8 +17,3 @@ google-api-python-client = "*"
 
 pytest = "*"
 pytest-mock = "*"
-
-
-[requires]
-
-python_version = "3.6"

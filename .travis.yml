@@ -6,6 +6,9 @@ python:
   - "nightly"
 install:
   - pip install pipenv
-  - pipenv install
+  - pipenv install --dev
+env:
+  - PYTHONPATH=.
 script:
   - pipenv run pytest
+  - pipenv check
