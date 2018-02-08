@@ -6,5 +6,6 @@ python:
   - "nightly"
 install:
   - pip install pipenv
+  - pipenv install
 script:
   - pipenv run pytest
